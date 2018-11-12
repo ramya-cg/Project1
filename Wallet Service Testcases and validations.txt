@@ -1,0 +1,282 @@
+package com.capg.walletservice.test;
+
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.capg.walletservice.bean.AccountBean;
+import com.capg.walletservice.bean.CustomerBean;
+import com.capg.walletservice.exception.CustomerException;
+import com.capg.walletservice.service.AccountServiceImp;
+import com.capg.walletservice.service.IAccountService;
+
+public class AccountServiceImpTest {
+
+	CustomerBean bean=new CustomerBean();
+	AccountBean bean1=new AccountBean();
+	private static IAccountService service=null;
+	
+	@BeforeClass
+	public static void createInstance(){
+		service=new AccountServiceImp();		
+	}
+	@Test(expected=CustomerException.class)
+	public void testFirstNameLength() throws Exception{
+		bean.setFirstName("hai");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+	@Test(expected=CustomerException.class)
+	public void testFirstNameString() throws Exception{
+		bean.setFirstName("1234");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testLastNameLength() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("hai");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testLastNameString() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("1234");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testMobileNumberLength() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("814322");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testMobileNumberPattern() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("bcksdcbod");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testPanForLength() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRD2345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testEmailPattern() throws Exception{
+		bean.setFirstName("hai");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramyagmail");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testEmailForNull() throws Exception{
+		bean.setFirstName("hai");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId(null);
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testFirstNameForNull() throws Exception{
+		bean.setFirstName(null);
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testLastNameForNull() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName(null);
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test(expected=CustomerException.class)
+	public void testMobileForNull() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber(null);
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertFalse(result);
+	}
+
+	@Test
+	public void testForPositive() throws Exception{
+		bean.setFirstName("Ramya");
+		bean.setLastName("Dasari");
+		bean.setMobileNumber("8143227388");
+		bean.setPanNum("CRDJ12345J");
+		bean.setEmailId("ramya@gmail.com");
+		bean.setAddress("Eluru");
+		boolean result=service.createAccount(bean1);
+		Assert.assertTrue(result);
+	}
+
+	
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//AccountServiceImp
+
+package com.capg.walletservice.service;
+
+import com.capg.walletservice.bean.AccountBean;
+import com.capg.walletservice.bean.CustomerBean;
+import com.capg.walletservice.dao.AccountDAOImp;
+import com.capg.walletservice.dao.IAccountDAO;
+import com.capg.walletservice.exception.CustomerException;
+import com.capg.walletservice.exception.CustomerExceptionMessage;
+
+public class AccountServiceImp implements IAccountService {
+
+	@Override
+	public boolean createAccount(AccountBean accountBean) throws Exception {
+		CustomerBean bean = new CustomerBean();
+
+		if (bean.getFirstName().trim().length() < 5) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR1);
+
+		} else if (bean.getLastName().trim().length() < 5) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR2);
+		}
+
+		else if (!(bean.getMobileNumber().matches("[7-9][0-9]{9}"))) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR3);
+		} else if (!(bean.getPanNum().matches("[A-Z]{4}[0-9]{5}[A-Z]{1}"))) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR4);
+		} else if (!(bean.getEmailId().matches("[a-zA-Z0-9]+\\.[a-zA-Z0-9]+@gmail\\.com"))) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR5);
+		}
+
+		else {
+
+			IAccountDAO dao = new AccountDAOImp();
+			boolean result = dao.createAccount(accountBean);
+			return result;
+		}
+
+	}
+
+	@Override
+	public boolean deposit(AccountBean accountBean, double depositAmount) throws Exception {
+		AccountBean bean = new AccountBean();
+		if (!(bean.getBalance() > 500)) {
+			throw new CustomerException(CustomerExceptionMessage.ERROR6);
+		} else {
+			accountBean.setBalance(accountBean.getBalance() + depositAmount);
+			IAccountDAO dao = new AccountDAOImp();
+			boolean result = dao.updateAccount(accountBean);
+			return result;
+		}
+	}
+
+	@Override
+	public boolean withdraw(AccountBean accountBean, double withdrawAmount) throws Exception {
+		accountBean.setBalance(accountBean.getBalance() - withdrawAmount);
+		IAccountDAO dao = new AccountDAOImp();
+		boolean result = dao.updateAccount(accountBean);
+		return result;
+	}
+
+	@Override
+	public boolean fundTransfer(AccountBean accountBeanFrom, AccountBean accountBeanTo, double transferAmount)
+			throws Exception {
+
+		accountBeanFrom.setBalance(accountBeanFrom.getBalance() - transferAmount);
+		accountBeanTo.setBalance(accountBeanTo.getBalance() + transferAmount);
+
+		IAccountDAO dao = new AccountDAOImp();
+		boolean result1 = dao.updateAccount(accountBeanFrom);
+		boolean result2 = dao.updateAccount(accountBeanTo);
+		return result1 && result2;
+	}
+
+	@Override
+	public AccountBean findAccount(int accountId) throws Exception {
+		IAccountDAO dao = new AccountDAOImp();
+		AccountBean bean = dao.findAccount(accountId);
+		return bean;
+	}
+
+}
+
+
+
