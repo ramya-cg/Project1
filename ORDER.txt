@@ -1,0 +1,344 @@
+//OrderBean
+
+
+@Entity
+@Table(name="productOrder")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+public class Order {
+	
+	@Id
+	@Column(name="orderId")
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	private int orderId;
+
+	@OneToOne(targetEntity=Customer.class)
+	private Customer customer;
+	
+	@OneToOne(targetEntity=Cart.class)
+	private Cart cart;
+	
+	@OneToMany(targetEntity=Shipment.class,cascade=CascadeType.ALL)
+	private List<Shipment> shipments = new ArrayList<>();
+	
+	@JsonFormat(pattern="dd-MM-yyyy")
+	private Date orderDate;
+	
+	@OneToOne(targetEntity=Coupons.class)
+	private Coupons coupon;
+
+	public int getOrderId() {
+		return orderId;
+	}
+	public void setOrderId(int orderId) {
+		this.orderId = orderId;
+	}
+	public Customer getCustomer() {
+		return customer;
+	}
+	public void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
+	public Cart getCart() {
+		return cart;
+	}
+	public void setCart(Cart cart) {
+		this.cart = cart;
+	}
+	public List<Shipment> getShipments() {
+		return shipments;
+	}
+	public void setShipments(List<Shipment> shipments) {
+		this.shipments = shipments;
+	}
+	public Date getOrderDate() {
+		return orderDate;
+	}
+	public void setOrderDate(Date orderDate) {
+		this.orderDate = orderDate;
+	}
+	public Coupons getCoupon() {
+		return coupon;
+	}
+	public void setCoupon(Coupons coupon) {
+		this.coupon = coupon;
+	}
+	@Override
+	public String toString() {
+		return "Order [orderId=" + orderId + ", customer=" + customer + ", cart=" + cart + ", shipments=" + shipments
+				+ ", orderDate=" + orderDate + ", coupon=" + coupon + "]";
+	}
+	public Order(int orderId, Customer customer, Cart cart, List<Shipment> shipments, Date orderDate, Coupons coupon) {
+		super();
+		this.orderId = orderId;
+		this.customer = customer;
+		this.cart = cart;
+		this.shipments = shipments;
+		this.orderDate = orderDate;
+		this.coupon = coupon;
+	}
+	public Order() {
+		super();
+	}
+}
+
+
+
+
+// IOrderService
+
+
+
+public interface IOrderService {
+
+	public List<Product> displayCartProducts(int orderId);
+
+	public boolean checkAvailabilityInInventory(Order order);
+	public Order placeOrder(Order order);
+	public boolean deliverOrderAndUpdateInventory(Order order);
+	
+	public Order findOrderById(int orderId);
+	public boolean deleteOrder(int orderId);
+	
+	public List<Order> getOrdersForCustomer( int custId);
+	
+	public List<Order> getOrdersBetween(Date fromDate, Date toDate);
+	
+	public List<Order> getAllOrders();
+
+	
+	
+	
+}
+
+
+
+
+//OrderServiceImpl
+
+
+
+@Service("orderService")
+public class OrderService implements IOrderService {
+
+	@Autowired
+	private IOrderDao orderDao;
+	@Autowired
+	private IProductService productService;
+	@Autowired
+	private IShipmentService shipmentService;
+	@Autowired
+	private ICartDao cartDao;
+	@Autowired
+	private ICartProductDao cartProductDao;
+	
+
+	public OrderService(IOrderDao orderDao, IProductService productService) {
+		super();
+		this.orderDao = orderDao;
+		this.productService = productService;
+	}
+
+	@Override
+	public List<Product> displayCartProducts(int orderId) {		//display the cart items
+		Order order = findOrderById(orderId);
+		List<Product> products = new ArrayList<Product>();
+		if(order!=null) {
+			Cart cart = order.getCart();
+			if(cart!=null) {
+				List<CartProduct> cartProducts = cart.getCartProducts();
+				for(CartProduct cartProduct:cartProducts) {
+					products.add(cartProduct.getProduct());
+				}
+			}
+		}
+		return products;
+	}
+
+	@Override
+	public Order findOrderById(int orderId) {		//finding the order
+		Optional<Order> optional = orderDao.findById(orderId);
+		if (optional.isPresent()) {
+			return optional.get();
+		}
+		return null;
+	}
+
+	@Override
+	public boolean checkAvailabilityInInventory(Order order) {//checking availability of ordered products
+
+		List<CartProduct> products = order.getCart().getCartProducts();
+
+		// check if product is in sufficient quantity
+		for (CartProduct orderProduct : products) {
+			// fetch product from inventory
+			Product inventoryProduct = productService.getProduct(orderProduct.getProduct().getProductId());
+
+			// save orderProduct and inventoryProduct in map
+			// inventoryProductsMap.put(orderProduct, inventoryProduct);
+
+			// check quantity
+			int orderedQuantity = orderProduct.getQuantity();
+			int availableQuantity = inventoryProduct.getQuantity();
+			if (orderedQuantity > availableQuantity) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public Order placeOrder(Order order) {
+		/*System.out.println(order);
+		List<Shipment> shipments = order.getShipments();
+		for(Shipment shipment:shipments) {
+			shipmentService.insertshipment(shipment);
+		}
+		//System.out.println(order.getCart());
+		Cart cart = order.getCart();
+		List<CartProduct> cartProducts = cart.getCartProducts();
+		for(CartProduct cartProduct:cartProducts) {
+			cartProductDao.save(cartProduct);
+		}
+		cartDao.save(cart);
+		//cartService.
+		//order.setCart(cart);
+		order.setOrderDate(new Date());*/
+		Order newOrder = orderDao.save(order);
+		return newOrder;
+	}
+
+	@Override
+	public boolean deliverOrderAndUpdateInventory(Order order) {
+		List<CartProduct> products = order.getCart().getCartProducts();
+		Map<CartProduct, Product> inventoryProductsMap = new HashMap<>();
+
+		for (CartProduct orderProduct : products) {
+			// fetch product from inventory
+			Product inventoryProduct = productService.getProduct(orderProduct.getProduct().getProductId());
+
+			// save orderProduct and inventoryProduct in map
+			inventoryProductsMap.put(orderProduct, inventoryProduct);
+		}
+
+		// update quantity in inventory
+		for (Map.Entry<CartProduct, Product> productMap : inventoryProductsMap.entrySet()) {
+			// fetch orderProduct
+			CartProduct orderProduct = productMap.getKey();
+			// fetch inventoryProduct
+			Product inventoryProduct = productMap.getValue();
+
+			// quantity
+			int orderedQuantity = orderProduct.getQuantity();
+			int availableQuantity = inventoryProduct.getQuantity();
+
+			// update quantity
+			inventoryProduct.setQuantity(availableQuantity - orderedQuantity);
+			productService.updateProduct(inventoryProduct);
+		}
+
+		return true;
+	}
+
+	@Override
+	public List<Order> getOrdersForCustomer(int custId) { // to get orders for a customer
+		//System.out.println("Service"+orderDao.getOrdersForCustomer(custId) );
+		return orderDao.getOrdersForCustomer(custId) ;
+	}
+	
+	@Override
+	public boolean deleteOrder(int orderId) {
+		orderDao.deleteById(orderId);
+		return true;
+	}
+
+	@Override
+	public List<Order> getOrdersBetween(Date fromDate, Date toDate) {
+		return orderDao.getOrdersBetween(fromDate, toDate);
+	}
+
+	
+
+
+	@Override
+	public List<Order> getAllOrders() {
+		// TODO Auto-generated method stub
+		return orderDao.findAll();
+	}
+}
+
+
+
+
+
+
+//OrderController
+
+
+
+@CrossOrigin(origins = "*")
+@RestController
+@RequestMapping("/api/v1")
+public class OrderController {
+
+	@Autowired
+	private IOrderService orderService;
+
+	@GetMapping("/displayCartProducts/{orderId}")//error
+	public ResponseEntity<List<Product>> displayCartProducts(HttpSession session,
+			@PathVariable("orderId") Integer orderId) {
+		List<Product> mycart = orderService.displayCartProducts(orderId);
+		return new ResponseEntity<List<Product>>(mycart, HttpStatus.OK);
+	}
+
+	@GetMapping("/findOrderById/{orderId}")
+	public ResponseEntity<Order> findOrderById(@PathVariable("orderId") Integer orderId) {
+		Order order = orderService.findOrderById(orderId);
+		if (order == null)
+			return new ResponseEntity("Sorry! Product is not available!", HttpStatus.NOT_FOUND);
+		return new ResponseEntity<Order>(order, HttpStatus.OK);
+	}
+
+	@PostMapping("/checkAvailabilityInInventory")//
+	public ResponseEntity<Boolean> checkAvailabilityInInventory(@RequestBody Order order) {
+		if (orderService.checkAvailabilityInInventory(order)) {
+			return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Boolean>(false, HttpStatus.NOT_FOUND);
+		}
+	}
+	
+
+	@PostMapping("/placeOrder")//
+	public ResponseEntity<Order> placeOrder(@RequestBody Order order) {
+		Order nullOrder = null;
+		if (!orderService.checkAvailabilityInInventory(order)) {
+			return new ResponseEntity<Order>(nullOrder, HttpStatus.OK);
+		}
+		Order newOrder = orderService.placeOrder(order);
+		if (newOrder!=null) {
+			return new ResponseEntity<Order>(newOrder, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Order>(nullOrder, HttpStatus.NOT_FOUND);
+		}
+	}
+
+	@PostMapping("/deliverOrderAndUpdateInventory")//
+	public ResponseEntity<Boolean> deliverOrderAndUpdateInventory(@RequestBody Order order) {
+		if (orderService.deliverOrderAndUpdateInventory(order)) {
+			return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Boolean>(false, HttpStatus.NOT_FOUND);
+		}
+	}
+
+	@GetMapping("/getorders/{custId}")//
+	public ResponseEntity<List<Order>> displayAllOrder(HttpSession session, @PathVariable("custId") Integer custId) {
+		List<Order> myorder = new ArrayList<Order>();
+	
+			myorder = orderService.getOrdersForCustomer(custId);
+
+		return new ResponseEntity<List<Order>>(myorder, HttpStatus.OK);
+
+	}
+}
+
